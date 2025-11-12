@@ -685,6 +685,7 @@
   font-size: 24px;
   background: none;
   z-index: 10;
+  cursor: pointer;
 }
 
 .police-report {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "./App.css";
+import "../App.css";
 import {
   fetchCurrentUser,
   fetchScanInfo,
@@ -7,16 +7,17 @@ import {
   updateRedactionStatus,
   batchUpdateRedactions,
   addManualRedaction,
-} from "./mockApi";
-import PoliceReportModal from "./PoliceReportModal";
-import Error from "./Error";
-import Loading from "./Loading";
-import undoIcon from "./undo.png";
-import arrowIcon from "./arrow.png";
-import filterIcon from "./filter.png";
-import fileIcon from "./file.png";
+} from "../utils/mockApi";
+import PoliceReportModal from "../components/PoliceReportModal";
+import Error from "../components/Error";
+import Loading from "../components/Loading";
+import PendingRedactionButtons from "../components/PendingRedactionButtons";
+import undoIcon from "../assets/undo.png";
+import arrowIcon from "../assets/arrow.png";
+import filterIcon from "../assets/filter.png";
+import fileIcon from "../assets/file.png";
 
-function App() {
+export default function App() {
   const [documents, setDocuments] = useState([]);
   const [scanInfo, setScanInfo] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -46,9 +47,6 @@ function App() {
         const docsResponse = fetchDocuments();
         if (docsResponse.success) {
           setDocuments(docsResponse.data);
-          console.log(docsResponse.data);
-        } else {
-          setError(docsResponse.message);
         }
       } catch (err) {
         setError("Failed to fetch data. Please try again.");
@@ -69,6 +67,18 @@ function App() {
     );
   };
 
+  const handleApiResponse = (response, docId, errorMessage) => {
+    if (response.success) {
+      setDocuments((prevDocs) =>
+        prevDocs.map((doc) => (doc.id === docId ? response.data.document : doc))
+      );
+      return true;
+    } else {
+      console.error(errorMessage, response.message);
+      return false;
+    }
+  };
+
   const handleRedactionAction = (docId, redactionId, action) => {
     try {
       const response = updateRedactionStatus(
@@ -77,17 +87,7 @@ function App() {
         action,
         currentUser
       );
-
-      if (response.success) {
-        // Update local state with the response data
-        setDocuments((prevDocs) =>
-          prevDocs.map((doc) =>
-            doc.id === docId ? response.data.document : doc
-          )
-        );
-      } else {
-        console.error("Failed to update redaction:", response.message);
-      }
+      handleApiResponse(response, docId, "Failed to update redaction:");
     } catch (err) {
       console.error("Error updating redaction:", err);
     }
@@ -108,12 +108,12 @@ function App() {
     );
 
     if (allSelected) {
-      // Deselect all redactions for this document
+      // deselect all redactions for document
       setSelectedRedactions((prev) =>
         prev.filter((id) => !docRedactionIds.includes(id))
       );
     } else {
-      // Select all redactions for this document
+      // select all redactions for document
       setSelectedRedactions((prev) => {
         const newSelections = [...prev];
         docRedactionIds.forEach((id) => {
@@ -137,45 +137,22 @@ function App() {
         currentUser
       );
 
-      if (response.success) {
-        // Update local state with the response data
-        setDocuments((prevDocs) =>
-          prevDocs.map((doc) =>
-            doc.id === documentId ? response.data.document : doc
-          )
-        );
-        // Clear selections after bulk action
+      if (
+        handleApiResponse(
+          response,
+          documentId,
+          "Failed to bulk update redactions:"
+        )
+      ) {
         setSelectedRedactions([]);
-      } else {
-        console.error("Failed to bulk update redactions:", response.message);
       }
     } catch (err) {
       console.error("Error bulk updating redactions:", err);
     }
   };
 
-  const handleApproveAllPending = (doc) => {
-    const pendingRedactions = doc.redactions.filter(
-      (red) => red.status === "pending" && !red.isManual
-    );
-
-    pendingRedactions.forEach((redaction) => {
-      handleRedactionAction(doc.id, redaction.id, "approved");
-    });
-  };
-
-  const handleRejectAllPending = (doc) => {
-    const pendingRedactions = doc.redactions.filter(
-      (red) => red.status === "pending" && !red.isManual
-    );
-
-    pendingRedactions.forEach((redaction) => {
-      handleRedactionAction(doc.id, redaction.id, "rejected");
-    });
-  };
-
   const openPoliceReport = (doc, e) => {
-    e.stopPropagation(); // Prevent row expansion
+    e.stopPropagation();
     setSelectedDocument(doc);
     setShowPoliceReport(true);
   };
@@ -192,20 +169,75 @@ function App() {
         redactionData,
         currentUser
       );
-
-      if (response.success) {
-        // Update local state with the response data
-        setDocuments((prevDocs) =>
-          prevDocs.map((doc) =>
-            doc.id === documentId ? response.data.document : doc
-          )
-        );
-      } else {
-        console.error("Failed to add manual redaction:", response.message);
-      }
+      handleApiResponse(
+        response,
+        documentId,
+        "Failed to add manual redaction:"
+      );
     } catch (err) {
       console.error("Error adding manual redaction:", err);
     }
+  };
+
+  const renderStatusBadgeWithUndo = (status, docId, redactionId) => {
+    const statusLabel = status === "approved" ? "Redacted" : "Kept";
+    const statusClass = status === "approved" ? "approved" : "rejected";
+
+    return (
+      <div className="status-with-undo">
+        <span className={`status-badge ${statusClass}`}>{statusLabel}</span>
+        <button
+          className="btn-undo"
+          onClick={() => handleRedactionAction(docId, redactionId, "pending")}
+        >
+          <img src={undoIcon} alt="Undo" className="undo-icon" />
+        </button>
+      </div>
+    );
+  };
+
+  const renderUserInfo = (redaction) => {
+    if (redaction.isManual) {
+      return redaction.createdBy ? (
+        <span className="user-info-cell">
+          Badge #{redaction.createdByBadge}
+        </span>
+      ) : (
+        <span className="no-user-info">—</span>
+      );
+    }
+    return redaction.modifiedBy ? (
+      <span className="user-info-cell">Badge #{redaction.modifiedByBadge}</span>
+    ) : (
+      <span className="no-user-info">—</span>
+    );
+  };
+
+  const renderRedactionAction = (redaction, docId) => {
+    if (redaction.isManual) {
+      return <div className="manual-badge">Manual Redaction</div>;
+    }
+
+    if (redaction.status === "approved" || redaction.status === "rejected") {
+      return renderStatusBadgeWithUndo(redaction.status, docId, redaction.id);
+    }
+
+    return (
+      <>
+        <button
+          className="btn-approve"
+          onClick={() => handleRedactionAction(docId, redaction.id, "approved")}
+        >
+          Redact
+        </button>
+        <button
+          className="btn-reject"
+          onClick={() => handleRedactionAction(docId, redaction.id, "rejected")}
+        >
+          Keep
+        </button>
+      </>
+    );
   };
 
   const tableHeaders = [
@@ -298,7 +330,7 @@ function App() {
 
                   {expandedRows.includes(doc.id) && (
                     <div className="redactions-detail">
-                      {/* Bulk Action Buttons */}
+                      {/* bulk action buttons */}
                       {selectedRedactions.length > 0 && (
                         <div className="bulk-actions">
                           <div className="bulk-actions-info">
@@ -386,119 +418,21 @@ function App() {
                                 : `${redaction.confidence}%`}
                             </div>
                             <div className="table-text">
-                              {redaction.isManual ? (
-                                redaction.createdBy ? (
-                                  <span className="user-info-cell">
-                                    Badge #{redaction.createdByBadge}
-                                  </span>
-                                ) : (
-                                  <span className="no-user-info">—</span>
-                                )
-                              ) : redaction.modifiedBy ? (
-                                <span className="user-info-cell">
-                                  Badge #{redaction.modifiedByBadge}
-                                </span>
-                              ) : (
-                                <span className="no-user-info">—</span>
-                              )}
+                              {renderUserInfo(redaction)}
                             </div>
                             <div className="col-action">
-                              {redaction.isManual ? (
-                                <div className="manual-badge">
-                                  Manual Redaction
-                                </div>
-                              ) : redaction.status === "approved" ? (
-                                <div className="status-with-undo">
-                                  <span className="status-badge approved">
-                                    Redacted
-                                  </span>
-                                  <button
-                                    className="btn-undo"
-                                    onClick={() =>
-                                      handleRedactionAction(
-                                        doc.id,
-                                        redaction.id,
-                                        "pending"
-                                      )
-                                    }
-                                  >
-                                    <img
-                                      src={undoIcon}
-                                      alt="Undo"
-                                      className="undo-icon"
-                                    />
-                                  </button>
-                                </div>
-                              ) : redaction.status === "rejected" ? (
-                                <div className="status-with-undo">
-                                  <span className="status-badge rejected">
-                                    Kept
-                                  </span>
-                                  <button
-                                    className="btn-undo"
-                                    onClick={() =>
-                                      handleRedactionAction(
-                                        doc.id,
-                                        redaction.id,
-                                        "pending"
-                                      )
-                                    }
-                                  >
-                                    <img
-                                      src={undoIcon}
-                                      alt="Undo"
-                                      className="undo-icon"
-                                    />
-                                  </button>
-                                </div>
-                              ) : (
-                                <>
-                                  <button
-                                    className="btn-approve"
-                                    onClick={() =>
-                                      handleRedactionAction(
-                                        doc.id,
-                                        redaction.id,
-                                        "approved"
-                                      )
-                                    }
-                                  >
-                                    Redact
-                                  </button>
-                                  <button
-                                    className="btn-reject"
-                                    onClick={() =>
-                                      handleRedactionAction(
-                                        doc.id,
-                                        redaction.id,
-                                        "rejected"
-                                      )
-                                    }
-                                  >
-                                    Keep
-                                  </button>
-                                </>
-                              )}
+                              {renderRedactionAction(redaction, doc.id)}
                             </div>
                           </div>
                         ))}
                       </div>
 
-                      {/* approve/reject All buttons at bottom of redactions table */}
-                      <div className="table-bottom-actions">
-                        <button
-                          className="table-approve-all-btn"
-                          onClick={() => handleApproveAllPending(doc)}
-                        >
-                          Redact All Pending
-                        </button>
-                        <button
-                          className="table-reject-all-btn"
-                          onClick={() => handleRejectAllPending(doc)}
-                        >
-                          Keep All Pending
-                        </button>
-                      </div>
+                      {/* approve all/reject all buttons at bottom of redactions table */}
+                      <PendingRedactionButtons
+                        document={doc}
+                        onAction={handleRedactionAction}
+                        className="table"
+                      />
                     </div>
                   )}
                 </div>
@@ -519,5 +453,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
