@@ -12,6 +12,9 @@ import PoliceReportModal from "./PoliceReportModal";
 import Error from "./Error";
 import Loading from "./Loading";
 import undoIcon from "./undo.png";
+import arrowIcon from "./arrow.png";
+import filterIcon from "./filter.png";
+import fileIcon from "./file.png";
 
 function App() {
   const [documents, setDocuments] = useState([]);
@@ -233,36 +236,10 @@ function App() {
           <>
             <div className="controls-section">
               <h2 className="section-title">Documents to review:</h2>
-              <div className="controls">
-                <select className="control-dropdown">
-                  <option value="all">Category</option>
-                  <option value="address">Address</option>
-                  <option value="name">Name</option>
-                  <option value="phone">Phone</option>
-                </select>
-                <select className="control-dropdown">
-                  <option value="confidence">Sort By</option>
-                  <option value="confidence-desc">
-                    Confidence (High to Low)
-                  </option>
-                  <option value="confidence-asc">
-                    Confidence (Low to High)
-                  </option>
-                  <option value="location">Location</option>
-                </select>
-                <select className="control-dropdown">
-                  <option value="90">Confidence Threshold</option>
-                  <option value="95">95%+</option>
-                  <option value="90">90%+</option>
-                  <option value="85">85%+</option>
-                  <option value="80">80%+</option>
-                </select>
-              </div>
             </div>
 
             <div className="documents-table">
               <div className="table-header">
-                <div className="col-view">View Document</div>
                 <div className="col-filename">File Name</div>
                 <div className="col-status">Review Status</div>
                 <div className="col-detected">Redactions Detected</div>
@@ -280,53 +257,6 @@ function App() {
                   >
                     <div className="col-view">
                       <span
-                        className="icon-document"
-                        onClick={(e) => openPoliceReport(doc, e)}
-                      >
-                        <svg
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                          <path
-                            d="M14 2v6h6"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            fill="none"
-                          />
-                          <path
-                            d="M16 13H8"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M16 17H8"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M10 9H8"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </span>
-                      <span
                         className={`expand-icon ${
                           expandedRows.includes(doc.id) ? "expanded" : ""
                         }`}
@@ -334,7 +264,15 @@ function App() {
                         ▼
                       </span>
                     </div>
-                    <div className="col-filename">{doc.fileName}</div>
+                    <div className="col-file">
+                      <span
+                        className="filename-link"
+                        onClick={(e) => openPoliceReport(doc, e)}
+                      >
+                        <img src={fileIcon} alt="File" className="file-icon" />
+                        {doc.fileName}
+                      </span>
+                    </div>
                     <div className="col-status">{doc.reviewStatus}</div>
                     <div className="col-detected">{doc.redactionsDetected}</div>
                     <div className="col-applied">{doc.redactionsApplied}</div>
@@ -387,14 +325,61 @@ function App() {
                               onChange={() => toggleSelectAllRedactions(doc)}
                             />
                           </div>
-                          <div className="col-heading">Text</div>
-                          <div className="col-heading">Category</div>
-                          <div className="col-heading">Location</div>
-                          <div className="col-heading">AI Suggestion Strength</div>
+                          <div className="col-heading">
+                            Text
+                            <img
+                              src={arrowIcon}
+                              alt="Arrow"
+                              className="arrow-icon"
+                            />
+                          </div>
+                          <div className="col-heading">
+                            Category
+                            <img
+                              src={arrowIcon}
+                              alt="Arrow"
+                              className="arrow-icon"
+                            />
+                          </div>
+                          <div className="col-heading">
+                            Location{" "}
+                            <img
+                              src={arrowIcon}
+                              alt="Arrow"
+                              className="arrow-icon"
+                            />
+                          </div>
+                          <div className="col-heading">
+                            AI Suggestion Strength
+                            <img
+                              src={arrowIcon}
+                              alt="Arrow"
+                              className="arrow-icon"
+                            />
+                          </div>
                           <div className="col-heading">
                             Last Modified By
+                            <img
+                              src={arrowIcon}
+                              alt="Arrow"
+                              className="arrow-icon"
+                            />
                           </div>
-                          <div className="col-heading">Action</div>
+                          <div className="col-heading">
+                            Action
+                            <img
+                              src={arrowIcon}
+                              alt="Arrow"
+                              className="arrow-icon"
+                            />
+                          </div>
+                          <div className="col-heading">
+                            <img
+                              src={filterIcon}
+                              alt="Filter"
+                              className="filter-icon"
+                            />
+                          </div>
                         </div>
                         {doc.redactions.map((redaction) => (
                           <div key={redaction.id} className="redaction-row">
@@ -409,19 +394,19 @@ function App() {
                                 }
                               />
                             </div>
-                            <div className="col-heading">{redaction.text}</div>
-                            <div className="col-heading">
+                            <div className="table-text">{redaction.text}</div>
+                            <div className="table-text">
                               {redaction.category}
                             </div>
-                            <div className="col-heading">
+                            <div className="table-text">
                               {redaction.location}
                             </div>
-                            <div className="col-heading">
+                            <div className="table-text">
                               {redaction.isManual
                                 ? "N/A"
                                 : `${redaction.confidence}%`}
                             </div>
-                            <div className="col-heading">
+                            <div className="table-text">
                               {redaction.isManual ? (
                                 redaction.createdBy ? (
                                   <span
@@ -483,7 +468,7 @@ function App() {
                               ) : redaction.status === "rejected" ? (
                                 <div className="status-with-undo">
                                   <span className="status-badge rejected">
-                                     Kept
+                                    Kept
                                   </span>
                                   <button
                                     className="btn-undo"
