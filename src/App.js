@@ -208,6 +208,23 @@ function App() {
     }
   };
 
+  const tableHeaders = [
+    "File Name",
+    "Review Status",
+    "Redactions Detected",
+    "Redactions Applied",
+    "AI Suggestion Strength",
+  ];
+
+  const redactionsTableHeaders = [
+    "Text",
+    "Category",
+    "Location",
+    "AI Suggestion Strength",
+    "Last Modified By",
+    "Action",
+  ];
+
   return (
     <div className="App">
       <div className="container">
@@ -240,11 +257,11 @@ function App() {
 
             <div className="documents-table">
               <div className="table-header">
-                <div className="col-filename">File Name</div>
-                <div className="col-status">Review Status</div>
-                <div className="col-detected">Redactions Detected</div>
-                <div className="col-applied">Redactions Applied</div>
-                <div className="col-confidence">AI Suggestion Strength</div>
+                {tableHeaders.map((item) => (
+                  <div className="col-main" key={item}>
+                    {item}
+                  </div>
+                ))}
               </div>
 
               {documents.map((doc) => (
@@ -273,10 +290,10 @@ function App() {
                         {doc.fileName}
                       </span>
                     </div>
-                    <div className="col-status">{doc.reviewStatus}</div>
-                    <div className="col-detected">{doc.redactionsDetected}</div>
-                    <div className="col-applied">{doc.redactionsApplied}</div>
-                    <div className="col-confidence">{doc.confidenceLevel}%</div>
+                    <div className="col-main">{doc.reviewStatus}</div>
+                    <div className="col-main">{doc.redactionsDetected}</div>
+                    <div className="col-main">{doc.redactionsApplied}</div>
+                    <div className="col-main">{doc.confidenceLevel}%</div>
                   </div>
 
                   {expandedRows.includes(doc.id) && (
@@ -298,7 +315,7 @@ function App() {
                                 handleBulkAction(doc.id, "approved")
                               }
                             >
-                              Redact All
+                              Redact Selected
                             </button>
                             <button
                               className="bulk-btn bulk-reject"
@@ -306,7 +323,7 @@ function App() {
                                 handleBulkAction(doc.id, "rejected")
                               }
                             >
-                              Keep All
+                              Keep Selected
                             </button>
                           </div>
                         </div>
@@ -325,54 +342,16 @@ function App() {
                               onChange={() => toggleSelectAllRedactions(doc)}
                             />
                           </div>
-                          <div className="col-heading">
-                            Text
-                            <img
-                              src={arrowIcon}
-                              alt="Arrow"
-                              className="arrow-icon"
-                            />
-                          </div>
-                          <div className="col-heading">
-                            Category
-                            <img
-                              src={arrowIcon}
-                              alt="Arrow"
-                              className="arrow-icon"
-                            />
-                          </div>
-                          <div className="col-heading">
-                            Location{" "}
-                            <img
-                              src={arrowIcon}
-                              alt="Arrow"
-                              className="arrow-icon"
-                            />
-                          </div>
-                          <div className="col-heading">
-                            AI Suggestion Strength
-                            <img
-                              src={arrowIcon}
-                              alt="Arrow"
-                              className="arrow-icon"
-                            />
-                          </div>
-                          <div className="col-heading">
-                            Last Modified By
-                            <img
-                              src={arrowIcon}
-                              alt="Arrow"
-                              className="arrow-icon"
-                            />
-                          </div>
-                          <div className="col-heading">
-                            Action
-                            <img
-                              src={arrowIcon}
-                              alt="Arrow"
-                              className="arrow-icon"
-                            />
-                          </div>
+                          {redactionsTableHeaders.map((item) => (
+                            <div className="col-heading" key={item}>
+                              {item}
+                              <img
+                                src={arrowIcon}
+                                alt="Arrow"
+                                className="arrow-icon"
+                              />
+                            </div>
+                          ))}
                           <div className="col-heading">
                             <img
                               src={filterIcon}
@@ -409,28 +388,14 @@ function App() {
                             <div className="table-text">
                               {redaction.isManual ? (
                                 redaction.createdBy ? (
-                                  <span
-                                    className="user-info-cell"
-                                    title={`Created by Badge #${
-                                      redaction.createdByBadge
-                                    } on ${new Date(
-                                      redaction.createdAt
-                                    ).toLocaleString()}`}
-                                  >
+                                  <span className="user-info-cell">
                                     Badge #{redaction.createdByBadge}
                                   </span>
                                 ) : (
                                   <span className="no-user-info">—</span>
                                 )
                               ) : redaction.modifiedBy ? (
-                                <span
-                                  className="user-info-cell"
-                                  title={`Modified by Badge #${
-                                    redaction.modifiedByBadge
-                                  } on ${new Date(
-                                    redaction.modifiedAt
-                                  ).toLocaleString()}`}
-                                >
+                                <span className="user-info-cell">
                                   Badge #{redaction.modifiedByBadge}
                                 </span>
                               ) : (
@@ -439,9 +404,9 @@ function App() {
                             </div>
                             <div className="col-action">
                               {redaction.isManual ? (
-                                <span className="manual-badge">
+                                <div className="manual-badge">
                                   Manual Redaction
-                                </span>
+                                </div>
                               ) : redaction.status === "approved" ? (
                                 <div className="status-with-undo">
                                   <span className="status-badge approved">
@@ -456,7 +421,6 @@ function App() {
                                         "pending"
                                       )
                                     }
-                                    title="Undo"
                                   >
                                     <img
                                       src={undoIcon}
@@ -479,7 +443,6 @@ function App() {
                                         "pending"
                                       )
                                     }
-                                    title="Undo"
                                   >
                                     <img
                                       src={undoIcon}
@@ -521,7 +484,7 @@ function App() {
                         ))}
                       </div>
 
-                      {/* Approve All / Reject All buttons at bottom of redactions table */}
+                      {/* approve/reject All buttons at bottom of redactions table */}
                       <div className="table-bottom-actions">
                         <button
                           className="table-approve-all-btn"
@@ -552,7 +515,6 @@ function App() {
         documents={documents}
         onRedactionAction={handleRedactionAction}
         onAddManualRedaction={handleAddManualRedaction}
-        // onRemoveManualRedaction={handleRemoveManualRedaction}
       />
     </div>
   );
