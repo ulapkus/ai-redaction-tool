@@ -79,12 +79,13 @@ export default function App() {
     }
   };
 
-  const handleRedactionAction = (docId, redactionId, action) => {
+  // update redaction status
+  const handleRedactionAction = (docId, redactionId, status) => {
     try {
       const response = updateRedactionStatus(
         docId,
         redactionId,
-        action,
+        status,
         currentUser
       );
       handleApiResponse(response, docId, "Failed to update redaction:");

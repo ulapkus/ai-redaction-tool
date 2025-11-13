@@ -11,7 +11,6 @@ export default function PoliceReportModal({
   onRedactionAction,
   onAddManualRedaction,
 }) {
-  const [redactedRanges, setRedactedRanges] = useState([]);
   const [selectionMenu, setSelectionMenu] = useState({
     show: false,
     x: 0,
@@ -29,7 +28,6 @@ export default function PoliceReportModal({
 
   // closes the modal
   const handleClose = () => {
-    setRedactedRanges([]);
     setSelectionMenu({ show: false, x: 0, y: 0, text: "" });
     setRedactionActionMenu({ show: false, x: 0, y: 0, redaction: null });
     onClose();
@@ -92,7 +90,6 @@ export default function PoliceReportModal({
   // handles the redaction button
   const handleRedactSelection = () => {
     if (selectionMenu.text) {
-      setRedactedRanges((prev) => [...prev, selectionMenu.text]);
 
       onAddManualRedaction(selectedDocument.id, {
         text: selectionMenu.text,
@@ -183,8 +180,7 @@ export default function PoliceReportModal({
                   <p key={paragraph}>
                     <RedactableText
                       text={paragraph}
-                      redactedRanges={redactedRanges}
-                      aiRedactions={currentDocument?.redactions || []}
+                      redactionList={currentDocument?.redactions || []}
                       onRedactionClick={handleRedactionClick}
                     />
                   </p>
